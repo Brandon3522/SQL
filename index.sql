@@ -1,9 +1,9 @@
 -- SELECT operator
 SELECT 
 	last_name,
-    first_name,
-    points,
-    (points + 10) * 100 AS discount_factor # Get discount with name of column modified
+  first_name,
+  points,
+  (points + 10) * 100 AS discount_factor # Get discount with name of column modified
 FROM customers;
 
 -- SELECT DISTINCT operator: Removes duplicate data
