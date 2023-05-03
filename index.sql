@@ -207,14 +207,14 @@ JOIN customers ON orders.customer_id = customers.customer_id;
 
 -- Use alias
 SELECT order_id, o.customer_id, first_name, last_name
-FROM orders o
-JOIN customers c 
+FROM orders o -- o = alias
+JOIN customers c -- c = alias
 ON o.customer_id = c.customer_id;
 
 -- Exercise
 -- Join order_items with products, 
 	-- products: return porduct_id and name
-    -- order_items: return quantity and unit_price
+  -- order_items: return quantity and unit_price
 SELECT order_id, p.product_id, name, quantity, oi.unit_price
 FROM products p
 JOIN order_items oi
@@ -225,9 +225,92 @@ ON oi.product_id = p.product_id;
 -- Join order_items table with products table from sql_inventory database
 SELECT *
 FROM order_items oi
-JOIN sql_inventory.products p
+JOIN sql_inventory.products p -- sql_inventory = separate database
 ON oi.product_id = p.product_id;
 ----------------------------------------------------
+
+-- Self joins: Join a table with itself
+-- Select name of each employee and their manager
+USE sql_hr;
+SELECT e.employee_id, e.first_name, m.first_name AS manager
+FROM employees e -- employee alias
+JOIN employees m -- manager alias
+ON e.reports_to = m.employee_id;
+----------------------------------------------------
+
+-- Joining multiple tables: 
+-- Join orders, customers, and order statuses
+USE sql_store;
+SELECT o.order_id, o.order_date, c.first_name, c.last_name, os.name AS status
+FROM orders o
+JOIN customers c ON o.customer_id = c.customer_id
+JOIN order_statuses os ON o.status = os.order_status_id;
+
+-- Exercise: Join payments, clients, and payment methods
+	-- Shows the payment with name of client and payment method
+USE sql_invoicing;
+SELECT p.invoice_id, p.date, p.amount, c.name, pm.name
+FROM payments p
+JOIN clients c ON p.client_id = c.client_id
+JOIN payment_methods pm ON p.payment_method = pm.payment_method_id
+----------------------------------------------------
+
+-- Compound join conditions: Used for composite primary keys -> table with multiple primary keys
+-- Join customers with order items
+USE sql_store;
+SELECT *
+FROM order_items oi
+JOIN order_item_notes oin ON oi.order_id = oin.order_Id 
+	AND oi.product_id = oin.product_id;
+----------------------------------------------------
+
+-- Implicit join syntax: Better to use an explicit approach
+SELECT *
+FROM orders o
+JOIN customers c ON o.customer_id = c.customer_id;
+
+-- Above query is equal to the following Implicit join syntax query
+SELECT *
+FROM orders o, customers c
+WHERE o.customer_id = c.customer_id;
+----------------------------------------------------
+
+-- Outer joins: 
+-- Left outer join: All records from left table, and matched records from the right table
+-- Right outer join: All records from right table, and matched records from the left table
+-- Inner join
+	-- Only shows customers with orders, due to the ON condition in JOIN
+SELECT c.customer_id, c.first_name, o.order_id
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+ORDER BY c.customer_id;
+
+-- Outer left join
+	-- Show customers with and without orders
+SELECT c.customer_id, c.first_name, o.order_id
+FROM customers c
+LEFT JOIN orders o ON c.customer_id = o.customer_id
+ORDER BY c.customer_id;
+
+-- Outer right join
+	-- Show customers with orders
+SELECT c.customer_id, c.first_name, o.order_id
+FROM customers c
+RIGHT JOIN orders o ON c.customer_id = o.customer_id
+ORDER BY c.customer_id;
+
+-- Exercise: Join products with order items - ordered and not ordered
+	-- Return product id, name, and quantity
+SELECT p.product_id, p.name, oi.quantity
+FROM products p
+LEFT JOIN order_items oi ON p.product_id = oi.product_id
+ORDER BY p.product_id;
+----------------------------------------------------
+
+
+
+
+
 
 
 
