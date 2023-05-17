@@ -194,7 +194,6 @@ LIMIT 3;
 ----------------------------------------------------
  
 -- INNER JOIN operator: combine rows from two or more tables, based on a related column between them
--- 
 -- Join orders and customers by id
 SELECT *
 FROM orders
@@ -213,7 +212,7 @@ ON o.customer_id = c.customer_id;
 
 -- Exercise
 -- Join order_items with products, 
-	-- products: return porduct_id and name
+	-- products: return product_id and name
   -- order_items: return quantity and unit_price
 SELECT order_id, p.product_id, name, quantity, oi.unit_price
 FROM products p
@@ -307,8 +306,75 @@ LEFT JOIN order_items oi ON p.product_id = oi.product_id
 ORDER BY p.product_id;
 ----------------------------------------------------
 
+-- Outer join between multiple tables:
+-- Join orders with shippers table: Left outer join and inner join
+	-- All orders, including null 
+SELECT c.customer_id, c.first_name, o.order_id, sh.name AS shipper
+FROM customers c
+LEFT JOIN orders o ON c.customer_id = o.customer_id
+LEFT JOIN shippers sh ON o.shipper_id = sh.shipper_id
+ORDER BY c.customer_id;
 
+-- Exercise: Join customers, orders, shippers, and order_statuses
+SELECT o.order_id, o.order_date, c.first_name AS customer, sh.name AS shipper, os.name AS status
+FROM orders o
+JOIN customers c ON o.customer_id = c.customer_id
+LEFT JOIN shippers sh ON o.shipper_id = sh.shipper_id
+LEFT JOIN order_statuses os ON o.status = os.order_status_id
+ORDER BY o.order_id;
+----------------------------------------------------
 
+-- Self Outer Joins:
+-- Retrieve all employees and match them with their manager, include employees with null manager
+USE sql_hr;
+
+SELECT e.employee_id, e.first_name, m.first_name AS manager
+FROM employees e
+LEFT JOIN employees m ON e.reports_to = m.employee_id
+----------------------------------------------------
+
+-- Using clause:
+-- You can replace ON with USING clause, only works when both tables have the same column name
+USE sql_store;
+
+SELECT o.order_id, c.first_name, sh.name AS shipper
+FROM orders o
+JOIN customers c 
+	-- ON o.customer_id = c.customer_id
+    USING (customer_id) -- Same as above
+LEFT JOIN shippers sh USING (shipper_id);
+
+-- -- Join order_items with order_item_notes
+SELECT *
+FROM order_items oi
+JOIN order_item_notes oin USING (order_id, product_id);
+
+-- Exercise: Join payments with clients, and payment_methods
+	-- Include date, client name, amount, and type of payment
+USE sql_invoicing;
+
+SELECT p.date, c.name AS client, p.amount, pm.name AS payment_method
+FROM payments p
+JOIN clients c USING (client_id)
+LEFT JOIN payment_methods pm ON p.payment_method = pm.payment_method_id
+----------------------------------------------------
+
+-- Cross joins: Combine or join every record with multiple tables
+-- Good situation for a cross join: Match table of sizes to their colors
+USE sql_store;
+
+SELECT c.first_name AS customer, p.name AS product
+FROM customers c
+CROSS JOIN products p
+ORDER BY c.first_name;
+
+-- Exercise: Cross join shippers and products
+
+SELECT s.name AS shipper, p.name AS product
+FROM shippers s
+CROSS JOIN products p
+ORDER BY s.name;
+----------------------------------------------------
 
 
 
