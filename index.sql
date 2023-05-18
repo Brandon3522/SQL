@@ -376,6 +376,203 @@ CROSS JOIN products p
 ORDER BY s.name;
 ----------------------------------------------------
 
+-- Unions: Combine records from multiple queries, both parts must return the same amount of columns
+-- Label orders after given date as active, 
+	-- union with all orders before given date as archived
+SELECT order_id, order_date, 'Active' AS status
+FROM orders
+WHERE order_date >= '2019-01-01'
+UNION
+SELECT order_id, order_date, 'Archived' AS status
+FROM orders
+WHERE order_date < '2019-01-01';
+
+-- Multiple tables
+SELECT first_name
+FROM customers
+UNION
+SELECT name
+FROM shippers;
+
+-- Exercise: Categorize customers based on number of points
+	-- < 2000 bronze, 2000 - 3000 silver, > 3000 gold
+SELECT customer_id, first_name, points, 'Bronze' AS type
+FROM customers
+WHERE points < 2000
+UNION
+SELECT customer_id, first_name, points, 'Silver' AS type
+FROM customers
+WHERE points BETWEEN 2000 AND 3000
+UNION
+SELECT customer_id, first_name, points, 'Gold' AS type
+FROM customers
+WHERE points > 3000
+ORDER BY first_name
+----------------------------------------------------
+
+-- Column attributes:
+ -- VARCHAR(50): 50 character limit
+	 -- PK: Primary key
+	 -- NN: Not null
+     -- AI: Auto increment value
+     -- Default expression: Default value, NULL or '0'
+----------------------------------------------------
+
+-- Inserting a single row into table:
+	-- Values: Data to insert into each column
+
+INSERT INTO customers (first_name, last_name, birth_date, address, city, state)
+VALUES (
+	'John', 
+	'Smith', 
+	'1990-01-01',
+	'address',
+    'city',
+    'CA')
+----------------------------------------------------
+
+-- Inserting multiple rows:
+	-- Values: Add comma between each set of parentheses for multiple rows
+
+INSERT INTO shippers (name)
+VALUES ('Shipper1'), ('Shipper2'), ('Shipper3');
+
+-- Exercise: Inserst three rows into products table
+INSERT INTO products (name, quantity_in_stock, unit_price)
+VALUES ('Product1', 5, 2.50), ('Product2', 5, 2.50), ('Product3', 5, 2.50)
+----------------------------------------------------
+
+-- Inserting heirarchical rows: multiple tables
+	-- Parent child relationship: Orders -> order_items
+    -- LAST_INSERT_ID(): Get the last id inserted into table
+
+-- Insert an order and its order_items
+INSERT INTO orders (customer_id, order_date, status)
+VALUES (1, '2019-02-02', 1);
+
+INSERT INTO order_items
+VALUES (LAST_INSERT_ID(), 1, 1, 2.50), (LAST_INSERT_ID(), 2, 1, 3.50)
+----------------------------------------------------
+
+-- Creating copy of table to another table:
+
+-- Create copy of orders, insert all data into copy
+	-- PK and AI ignored
+CREATE TABLE orders_archived AS SELECT * FROM orders;
+
+-- Only Copy orders placed before 2019
+	-- SELECT is a sub query to INSERT INTO
+INSERT INTO orders_archived
+SELECT *
+FROM orders
+WHERE order_date < '2019-01-01';
+
+-- Exercise: Sql_invoicing invoices
+	-- Copy table to archive, replace client_id with client name
+    -- Join table with clients table, use as sub query to CREATE TABLE statement
+    -- Only copy invoices that have payment
+USE sql_invoicing;
+CREATE TABLE invoices_archived AS
+SELECT 
+	i.invoice_id, 
+	i.number, 
+	c.name AS client, 
+	i.invoice_total, 
+	i.payment_total, 
+	i.invoice_date, 
+	i.payment_date, 
+	i.due_date
+FROM invoices i
+JOIN clients c ON i.client_id = c.client_id
+WHERE payment_date IS NOT NULL
+----------------------------------------------------
+
+-- Updating a single row:
+	-- Update: table
+    -- Set: Values to update
+    -- Where: Condition for update
+
+-- Update payment total and payment date on the first row in the table
+UPDATE invoices
+SET payment_total = 10, payment_date = '2019-03-05'
+WHERE invoice_id = 1;
+
+-- Update invoice id 3, update payment date to due date in invoices table, 
+	-- update payment total to 50% of invoice total
+UPDATE invoices
+SET 
+	payment_total = invoice_total * 0.5, 
+	payment_date = due_date
+WHERE invoice_id = 3
+----------------------------------------------------
+
+-- Updating multiple rows:
+
+-- Update all invoices for client id 3
+UPDATE invoices
+SET
+	payment_total = invoice_total * 0.5,
+    payment_date = due_date
+WHERE client_id = 3;
+
+-- Update all invoices for client 3 and 4
+UPDATE invoices
+SET
+	payment_total = invoice_total * 0.5,
+    payment_date = due_date
+WHERE client_id IN (3, 4);
+
+-- Exercise: Update any customers born before 1990 with 50 additional points
+UPDATE customers
+SET points = points + 50
+WHERE birth_date < '1990-01-01'
+----------------------------------------------------
+
+-- Using subqueries in updates:
+
+-- Update all invoices for client name
+	-- Use select statement as subquery instead of hardcoding client id
+UPDATE invoices
+SET
+	payment_total = invoice_total * 0.5,
+    payment_date = due_date
+WHERE client_id = 
+	(SELECT client_id -- Find client id where name is given value
+	FROM clients
+	WHERE name = 'Myworks');
+    
+-- Update all invoices for clients in states CA and NY
+    -- Use IN instead of = when returning multiple records form subquery
+UPDATE invoices
+SET
+	payment_total = invoice_total * 0.5,
+    payment_date = due_date
+WHERE client_id IN 
+	(SELECT client_id 
+	FROM clients
+	WHERE state IN ('CA', 'NY'));
+    
+-- Exercise: Customers table, update comments to 'gold customer' if they have more than 3000 points
+USE sql_store;
+UPDATE orders
+SET comments = 'GOLD CUSTOMER'
+WHERE customer_id IN 
+	(SELECT customer_id
+	FROM customers
+	WHERE points > 3000);
+----------------------------------------------------
+
+-- Deleting rows:
+
+-- Delete invoice where name is 'Myworks'
+DELETE FROM invoices
+WHERE invoice_id = (SELECT *
+	FROM clients
+	WHERE name = 'Myworks')
+----------------------------------------------------
+
+
+
 
 
 
